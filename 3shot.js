@@ -9,6 +9,7 @@ var request = require('request'),
 server = http.createServer(function(req, res){
     // your normal server code
     var path = url.parse(req.url).pathname;
+
     switch (path){
     case '/':
         sys.puts("something happened");
@@ -16,35 +17,26 @@ server = http.createServer(function(req, res){
         res.write('<h1>Welcome. Try the <a href="/chat.html">chat</a> example.</h1>');
         res.end();
         break;
+    default:
+        serveFile(path);
+    }
 
-        
-    case '/viewer.html':
-        var filename = __dirname + "/public/viewer/index.html";
+    function serveFile(path) {
+        var filename = __dirname + "/web" + path;
         fs.readFile(filename, function(err, data){
+            console.log("pathname: ", path);
             sys.puts("Sending file...[" + filename + "]");
             if (err) return send404(res);
             res.writeHead(200, {'Content-Type': 'text/html'})
             res.write(data, 'utf8');
             res.end();
         });
-        break;
-
-    case '/json.js':
-        var filename = __dirname + "/public/javascripts/json.js";
-        fs.readFile(filename, function(err, data){
-            sys.puts("Sending file...[" + filename + "]");
-            if (err) return send404(res);
-            res.writeHead(200, {'Content-Type': 'text/javascript'})
-            res.write(data, 'utf8');
-            res.end();
-        });
-        break;
+    };
         
-    default: send404(res);
-    }
 }),
 
 send404 = function(res){
+    console.log("[Error] 404");
     res.writeHead(404);
     res.write('404');
     res.end();
@@ -55,20 +47,18 @@ server.listen(8080);
 var imageUrls = [
     "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
     "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png"]
+    "http://www.flash-slideshow-maker.com/images/help_clip_image020.jpg",
+    "http://t2.gstatic.com/images?q=tbn:ANd9GcRqBS2kfkyWx6CvPRDKvqK7nHR-ntRUfzF4vYQZiRfVX9L3mj4&t=1&usg=__htpQeZ9jTNZ0Sb1YpO1nZ1mGZVU=",
+    "http://www.oxfordreference.com/media/images/9346_0.jpg",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae6b85/0000screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0000screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0002screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0004screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0006screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0008screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0010screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0012screenshot.png",
+    "https://saucelabs.com/jobs/cc166bba20685b34dce43e6b3eae64ab/0014screenshot.png"]
 
 var bl = new BufferList();
 var imageData;
