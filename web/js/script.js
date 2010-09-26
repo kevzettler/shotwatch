@@ -12,15 +12,39 @@ var data ={
 
 function loadData(data){
   var $imageTag = $('img[alt="'+data.browser_name+':'+data.browser_version+'"]');
-  $imageTag.attr('src', data.image_data);
+  $imageTag.attr('src', data.imageData);
   $imageTag.attr('title', data.url);
+} 
+
+// What to do when we first connect to a server
+function connectHandler(obj){
+    //console.log("Connected: ", obj);
 }
 
-window.onload = function(){
-  window.setTimeout(function(){
-    loadData(data);
-  }, 2000);
+// What to do when we receive a message from the server
+function messageHandler(obj){
+    loadData(obj)
 }
+
+// What to do when we receive a discconect from the server
+function disconnectHandler(obj){
+    //console.log("Disconnected: ", obj);
+}
+
+// Send a json object to the server [not used currently]
+function send(obj){
+    //console.log("Sending: ", obj);
+    socket.send(JSON.stringify(obj));
+}
+
+$(document).ready(function(){
+    var socket = new io.Socket(null, {port: 8080});
+    socket.connect();
+    
+    socket.on('connect', connectHandler);
+    socket.on('message', messageHandler);
+    socket.on('disconnect', disconnectHandler);
+});
 
 
 
