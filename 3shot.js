@@ -120,8 +120,10 @@ io.on('connection', function(client){
     }
     
     function checkShotDir(){
-     var newFiles, goodFiles;  
+     var newFiles;  
      fs.readdir(shotsDir, function(err, files){
+         var goodFiles = []
+
         if(imageUrls.length == 0){
           //fresh images render them
           imageUrls = files;
@@ -136,8 +138,10 @@ io.on('connection', function(client){
               goodFiles.push(newFiles[i]);
             }
           }
+
+            sys.puts("Good files: " + sys.inspect(goodFiles));
           
-          if(goodFiles.length > 0){
+          if(goodFiles.length > 0) {
             imageUrls = files;
             imagesToRender = goodFiles;
             newFiles = [];

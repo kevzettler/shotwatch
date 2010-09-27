@@ -27,6 +27,8 @@ var browsers = [
     {name: "firefox",
      version: "3.6"},
     {name: "safari",
+     version: "4"},
+    {name: "googlechrome",
      version: "4"}
 ];
 
@@ -36,7 +38,8 @@ var browserUrls = {
     "iexplore7" : [],
     "iexplore8" : [],
     "firefox3.6" : [],
-    "safari4": []
+    "safari4": [],
+    "googlechrome4": []
 };
 
 var workers = [];
@@ -137,7 +140,11 @@ server = http.createServer(function(req, res) {
 
         sys.puts(sys.inspect(tempUrls));
 
-        tempUrls.push(targetUrl);
+        try {
+            tempUrls.push(targetUrl);
+        }catch (err){
+            sys.puts("Couldn't add the url! [" + sys.inspect(err) + "]");
+        }
 
         sys.puts(sys.inspect(tempUrls));
 
