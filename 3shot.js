@@ -78,6 +78,7 @@ var io = io.listen(server),
     buffer = [];
 
 io.on('connection', function(client){
+    // Images we've sent already
     var imageUrls = [],
     imagesToRender = [];  
 
@@ -118,18 +119,27 @@ io.on('connection', function(client){
         getImageData(imagesToRender[i]);    
       }
     }
-    
+
     function checkShotDir(){
      var newFiles;  
      fs.readdir(shotsDir, function(err, files){
+         sys.puts("Checking for new files...");
+         sys.puts(sys.inspect(imageUrls) + " == " + sys.inspect(files) + " -> " + sys.inspect(imageUrls.diff(files)) + ", " + sys.inspect(imageUrls.diff(files).length) + " diffs");
          var goodFiles = []
 
         if(imageUrls.length == 0){
           //fresh images render them
-          imageUrls = files;
-          imagesToRender = files
-          renderImages();
-        }else if(imageUrls.length != files.length){
+            rawFiles = files;
+            imagesToRender = [];
+            for(i=0; i < rawFiles.length; i++){
+                if(rawFiles[i].split('.').pop() == 'png'){
+                    sys.puts("adding: [" + rawFiles[i] + "]");
+                    imageUrls.push(rawFiles[i]);
+                    imagesToRender.push(rawFiles[i]);
+                }
+            }
+            renderImages();
+        }else if(imageUrls.symmetricDiff(files).length != 0){
           //new images
           newFiles = files.diff(imageUrls);
           //reduce newFiles to only png
@@ -142,7 +152,8 @@ io.on('connection', function(client){
             sys.puts("Good files: " + sys.inspect(goodFiles));
           
           if(goodFiles.length > 0) {
-            imageUrls = files;
+              imageUrls = imageUrls.concat(goodFiles).unique();
+              sys.puts("Sent files changed. Now: " + sys.inspect(imageUrls));
             imagesToRender = goodFiles;
             newFiles = [];
             renderImages();
@@ -159,7 +170,7 @@ io.on('connection', function(client){
     * Node will try and render the image before the data
     * Has been copied, and render an empty buffer
     ****/
-    var checkShotDir = setInterval(checkShotDir, 2000);
+    var checkShotDir = setInterval(checkShotDir, 300);
 });
 
 
