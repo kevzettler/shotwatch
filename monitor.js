@@ -58,12 +58,12 @@ for (browser_index in browsers) {
 
 function workerRun(callback) {
     console.log("My status: " + this.status + ".");
-    if (this.status != "idle") { console.log("Sorry, I am [" + this.status + "]"); return; }
+    if (this.status != "idle") { console.log("Sorry, I am [" + this.status + "]"); return false; }
 
 
     console.log("My urls: " + this.urls + ".");
     var url = this.urls.shift();
-    if (null == url) { console.log("No more urls for " + browser.name + browser.version); return; } // No urls waiting for this browser
+    if (null == url) { console.log("No more urls for " + browser.name + browser.version); return false; } // No urls waiting for this browser
 
     console.log("Getting [" + url + "] for " + browser.name + browser.version);
 
@@ -120,17 +120,27 @@ server = http.createServer(function(req, res) {
 
     switch (path){
     case '/addUrl':
+        var query = queryString.parse(urlObj.query);
         sys.puts("Adding url");
         
-        var browser_name = "",
-            browser_verion = "",
-            url = "";
-        /*
-        var tempUrls = browserUrls[browser_name + browser_version].urls;
-        
-        tempUrls.push(url);
-*/
+        var browser_name = query.browser,
+            browser_version = query.version,
+            targetUrl = query.url;
+
+
+        sys.puts(browser_name, browser_version, targetUrl);
+
+        var tempUrls = browserUrls[browser_name + browser_version];
+
+        sys.puts(sys.inspect(tempUrls));
+
+        tempUrls.push(targetUrl);
+
+        sys.puts(sys.inspect(tempUrls));
+
         res.end();
+
+        runWorkers();
         break;
     }
 });
@@ -152,9 +162,12 @@ sys.puts("Beginning loop through workers");
 sys.puts("Workers: " + sys.inspect(workers));
 //sys.puts(sys.inspect(workers));
 function runWorkers() {
+    sys.puts("runWorkers!");
     for (worker_index in workers) {
         (function (i) {
             var worker = workers[i];
+            sys.puts(worker.status + "]" + worker.browser.name + worker.browser.version + ": " + sys.inspect(worker.urls));
+
             if (worker.status == "idle") {
                 sys.puts("Before Worker: " + sys.inspect(worker));
                 worker.run(function() {
@@ -162,10 +175,12 @@ function runWorkers() {
                     if (worker.urls.length != 0) {
                         runWorkers();
                     }else{
-                        setTimeout(runWorkers, 1000);
+                        worker.status = "idle";
                     }
                 });
             }
         })(worker_index);
     }
 }
+
+runWorkers();
