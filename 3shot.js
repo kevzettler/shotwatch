@@ -120,7 +120,7 @@ io.on('connection', function(client){
     }
     
     function checkShotDir(){
-     var newFiles;  
+     var newFiles, goodFiles;  
      fs.readdir(shotsDir, function(err, files){
         if(imageUrls.length == 0){
           //fresh images render them
@@ -130,13 +130,17 @@ io.on('connection', function(client){
         }else if(imageUrls.length != files.length){
           //new images
           newFiles = files.diff(imageUrls);
+          //reduce newFiles to only png
+          for(i=0; i < newFiles.length; i++){
+            if(newFiles[i].split('.').pop() == 'png'){
+              goodFiles.push(newFiles[i]);
+            }
+          }
           
-          if(newFiles.length > 0){
+          if(goodFiles.length > 0){
             imageUrls = files;
-            imagesToRender = newFiles;
+            imagesToRender = goodFiles;
             newFiles = [];
-            sys.puts(sys.inspect(imagesToRender));
-            sys.puts(sys.inspect(imageUrls));
             renderImages();
           }
         }
@@ -151,7 +155,7 @@ io.on('connection', function(client){
     * Node will try and render the image before the data
     * Has been copied, and render an empty buffer
     ****/
-    var checkShotDir = setInterval(checkShotDir, 1000);
+    var checkShotDir = setInterval(checkShotDir, 2000);
 });
 
 
