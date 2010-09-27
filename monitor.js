@@ -77,12 +77,13 @@ function getImage(targetUrl, browserWorker, callback) {
 
     var imageRaw = '';
     var browser = browserWorker.browser;
-    var filename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.png";
+    var tmpFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.tmp";
+    var completeFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.png";
     var position = 0;
 
     var newUrl = url.parse(targetUrl);
 
-    fs.open(filename, "w", function(err, fd) {
+    fs.open(tmpFilename, "w", function(err, fd) {
 
         var google = http.createClient(80, newUrl.hostname);
         var request = google.request('GET', newUrl.pathname,
@@ -104,8 +105,10 @@ function getImage(targetUrl, browserWorker, callback) {
             
             response.on('end', function () {
                 fs.close(fd);
-                browserWorker.status = "idle";
-                callback();
+                fs.rename(tmpFilename, completeFilename, function() {
+                    browserWorker.status = "idle";
+                    callback();
+                });
             });
         });
     });
