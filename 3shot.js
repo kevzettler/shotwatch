@@ -78,7 +78,8 @@ var io = io.listen(server),
     buffer = [];
 
 io.on('connection', function(client){
-    var imageUrls = []; 
+    var imageUrls = [],
+    imagesToRender = [];  
 
     function getImageData(imageUrl) {
         var bl = new BufferList();
@@ -99,6 +100,8 @@ io.on('connection', function(client){
                  browser_version : imagePathChunks[2],
                  time: new Date()
              });  
+            }else{
+              sys.puts(sys.inspect(err));
             }
         });
         
@@ -111,33 +114,44 @@ io.on('connection', function(client){
     console.log("Received a socket.io connect: ", client.sessionId);
      
     function renderImages(){
-      for(i = 0; i<imageUrls.length; i++){
-        getImageData(imageUrls[i]);    
+      for(i = 0; i<imagesToRender.length; i++){
+        getImageData(imagesToRender[i]);    
       }
     }
     
     function checkShotDir(){
-     var localFiles;
-     
+     var newFiles;  
      fs.readdir(shotsDir, function(err, files){
         if(imageUrls.length == 0){
           //fresh images render them
           imageUrls = files;
+          imagesToRender = files
           renderImages();
         }else if(imageUrls.length != files.length){
           //new images
-          localFiles = files;
-          var newFiles = localFiles.diff(imageUrls);
+          newFiles = files.diff(imageUrls);
+          
           if(newFiles.length > 0){
-            imageUrls = newFiles;
+            imageUrls = files;
+            imagesToRender = newFiles;
+            newFiles = [];
+            sys.puts(sys.inspect(imagesToRender));
+            sys.puts(sys.inspect(imageUrls));
             renderImages();
           }
         }
-
      }); 
     }
     checkShotDir();
-    var checkShotDir = setInterval(checkShotDir, 20);
+    
+    /****
+    * CAUTION
+    * If we are checking the Directory too fast.
+    * And an image is copied in.
+    * Node will try and render the image before the data
+    * Has been copied, and render an empty buffer
+    ****/
+    var checkShotDir = setInterval(checkShotDir, 1000);
 });
 
 
