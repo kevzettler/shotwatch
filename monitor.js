@@ -8,7 +8,8 @@ var request = require('request'),
     http = require('http'),  
     url = require('url'),
     fs = require('fs'),
-    queryString = require('querystring');
+    queryString = require('querystring'),
+    snapShotter = require('./lib/snapshotter');;
 
 var urlLibrary = url;
 
@@ -27,8 +28,6 @@ var browsers = [
     {name: "firefox",
      version: "3.6"},
     {name: "safari",
-     version: "4"},
-    {name: "googlechrome",
      version: "4"}
 ];
 
@@ -45,18 +44,24 @@ var browserUrls = {
 var workers = [];
 
 sys.puts("Building workers");
-for (browser_index in browsers) {
-    var browser = browsers[browser_index];
+for (browser_index in browsers) { 
+    (function(index){
+        sys.puts(" LOL browser index == "+index);
+        sys.puts(" omg browsers ===" + sys.inspect(browsers));
+        var browser = browsers[index];
+        
+        sys.puts(sys.inspect(browser));
+        var browserWorker = {
+            browser : browser,
+            urls : browserUrls[browser.name + browser.version],
+            snapShotter: new snapShotter.init(browser.name, browser.version),
+            run : workerRun,
+            status : "idle"
+        };
 
-    var browserWorker = {
-        browser : browser,
-        urls : browserUrls[browser.name + browser.version],
-        run : workerRun,
-        status : "idle"
-    };
-
-    sys.puts(sys.inspect(browserWorker.urls));
-    workers.push(browserWorker);
+        sys.puts(sys.inspect(browserWorker));
+        workers.push(browserWorker);
+    })(browser_index)
 }
 
 function workerRun(callback) {
@@ -66,9 +71,9 @@ function workerRun(callback) {
 
     console.log("My urls: " + this.urls + ".");
     var url = this.urls.shift();
-    if (null == url) { console.log("No more urls for " + browser.name + browser.version); return false; } // No urls waiting for this browser
+    if (null == url) { console.log("No more urls for " + this.browser.name + this.browser.version); return false; } // No urls waiting for this browser
 
-    console.log("Getting [" + url + "] for " + browser.name + browser.version);
+    console.log("Getting [" + url + "] for " + this.browser.name + this.browser.version);
 
     this.status = "working";
     console.log("My new status: " + this.status + ".");
@@ -77,44 +82,47 @@ function workerRun(callback) {
 
 function getImage(targetUrl, browserWorker, callback) {
     sys.puts("Wow, man");
+    sys.puts("Using this worker: " + browserWorker.browser.name  + browserWorker.browser.version);
 
-    var imageRaw = '';
-    var browser = browserWorker.browser;
-    var tmpFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.tmp";
-    var completeFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.png";
-    var position = 0;
+    browserWorker.snapShotter.takeShot(targetUrl);
 
-    var newUrl = url.parse(targetUrl);
+    // var imageRaw = '';
+    // var browser = browserWorker.browser;
+    // var tmpFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.tmp";
+    // var completeFilename = "shots/" + Hash.md5(targetUrl) + "_" + browser.name + "_" + browser.version + "_2_.png";
+    // var position = 0;
 
-    fs.open(tmpFilename, "w", function(err, fd) {
+    // var newUrl = url.parse(targetUrl);
 
-        var google = http.createClient(80, newUrl.hostname);
-        var request = google.request('GET', newUrl.pathname,
-            {'host': newUrl.host});
-        request.end();
+    // fs.open(tmpFilename, "w", function(err, fd) {
+
+    //     var google = http.createClient(80, newUrl.hostname);
+    //     var request = google.request('GET', newUrl.pathname,
+    //         {'host': newUrl.host});
+    //     request.end();
         
-        request.on('response', function (response) {
-            console.log('STATUS: ' + response.statusCode);
-            console.log('HEADERS: ' + JSON.stringify(response.headers));
-            //response.setEncoding();
-            response.on('data', function (buf) {
-                //console.log('BODY: [' + buf.toString('base64') + ']');
-                //sys.puts('buf(' + browser.name + '): [' + sys.inspect(buf));
+    //     request.on('response', function (response) {
+    //         console.log('STATUS: ' + response.statusCode);
+    //         console.log('HEADERS: ' + JSON.stringify(response.headers));
+    //         //response.setEncoding();
+    //         response.on('data', function (buf) {
+    //             //console.log('BODY: [' + buf.toString('base64') + ']');
+    //             //sys.puts('buf(' + browser.name + '): [' + sys.inspect(buf));
                 
-                fs.writeSync(fd, buf, 0, buf.length, position);
+    //             fs.writeSync(fd, buf, 0, buf.length, position);
 
-                position += buf.length
-            });
+    //             position += buf.length
+    //         });
             
-            response.on('end', function () {
-                fs.close(fd);
-                fs.rename(tmpFilename, completeFilename, function() {
-                    browserWorker.status = "idle";
-                    callback();
-                });
-            });
-        });
-    });
+    //         response.on('end', function () {
+    //             fs.close(fd);
+    //             fs.rename(tmpFilename, completeFilename, function() {
+    //                 browserWorker.status = "idle";
+    //                 callback();
+    //             });
+    //         });
+    //     });
+    // });
 }
 
 // http://someservice/addUrl?browser="firefox"&version=3.6&url=http://digg.com"
@@ -162,9 +170,9 @@ sys.puts("Seeding urls");
 for (index in browserUrls) {
     var urls = browserUrls[index];
 
-    urls.push("http://wp.appadvice.com/wp-content/uploads/2010/06/lemmings-select-2.png",
-              "http://upload.wikimedia.org/wikipedia/en/2/26/Lemmings2-SNES-skills.png",
-              "http://pingus.seul.org/~grumbel/tmp/md5/5d863e2dbacce28d25565b33d7d26c5e-vect.png"
+    urls.push("http://digg.com",
+              "http://wikimedia.org/",
+              "http://fakecoolguys.com"
              );
 }
 
@@ -183,8 +191,10 @@ function runWorkers() {
                 worker.run(function() {
                     sys.puts("After Worker: " + sys.inspect(worker));
                     if (worker.urls.length != 0) {
+                        sys.puts("Stepping into next urls: " + sys.inspect(worker.urls));
                         runWorkers();
                     }else{
+                        sys.puts("setting worker back to idle");
                         worker.status = "idle";
                     }
                 });
