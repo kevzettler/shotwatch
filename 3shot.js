@@ -1,47 +1,3 @@
-// Return new array with duplicate values removed
-Array.prototype.unique =
-  function() {
-    var a = [];
-    var l = this.length;
-    for(var i=0; i<l; i++) {
-      for(var j=i+1; j<l; j++) {
-        // If this[i] is found later in the array
-        if (this[i] === this[j])
-          j = ++i;
-      }
-      a.push(this[i]);
-    }
-    return a;
-  };
-
-// Return elements which are in A but not in arg0 through argn
-Array.prototype.diff =
-  function() {
-    var a1 = this;
-    var a = a2 = null;
-    var n = 0;
-    while(n < arguments.length) {
-      a = [];
-      a2 = arguments[n];
-      var l = a1.length;
-      var l2 = a2.length;
-      var diff = true;
-      for(var i=0; i<l; i++) {
-        for(var j=0; j<l2; j++) {
-          if (a1[i] === a2[j]) {
-            diff = false;
-            break;
-          }
-        }
-        diff ? a.push(a1[i]) : diff = true;
-      }
-      a1 = a;
-      n++;
-    }
-    return a.unique();
-  };  
-
-
 
 var request = require('request'),
     BufferList = require('bufferlist').BufferList,
@@ -51,15 +7,9 @@ var request = require('request'),
     fs = require('fs'),
     io = require('./lib/socket.io-node/lib/socket.io'); // for npm, otherwise use require('./path/to/socket.io')
 
-
-/*    
-var imageUrls = [
-    "http://img0.gmodules.com/ig/images/igoogle_logo_sm.png",
-    "https://saucelabs.com/images/logos/sauce_masthead_horizontal.png",
-    "http://www.flash-slideshow-maker.com/images/help_clip_image020.jpg",
-    "http://t2.gstatic.com/images?q=tbn:ANd9GcRqBS2kfkyWx6CvPRDKvqK7nHR-ntRUfzF4vYQZiRfVX9L3mj4&t=1&usg=__htpQeZ9jTNZ0Sb1YpO1nZ1mGZVU=",
-    "http://www.oxfordreference.com/media/images/9346_0.jpg"] 
-*/   
+//only extends native array
+require('./lib/Array.js');
+   
 
 var shotsDir = __dirname + "/shots";
 
@@ -121,17 +71,6 @@ server.listen(8080);
 
 
 
-
-function rotateImageData() {
-    sys.puts("Rotating image...", counter, imageUrls.length);
-    getImageData(imageUrls[counter]);
-    if(counter >= imageUrls.length -1){
-      counter = 0;
-    }else{
-      counter += 1;
-    }
-};
-
 /*
 * Setup Socket IO
 */
@@ -152,7 +91,6 @@ io.on('connection', function(client){
              
              imagePathChunks = imageUrl.split('_');
              
-             sys.puts(sys.inspect(image));
              var imageData = 'data:image/png;base64,' + image;
              //send the image data over the socket
              client.send({
